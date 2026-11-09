@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How mutual fund transactions are placed: Lumpsum, SIP, STP, SWP and Switch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F1F4F1;
+  --surface: #FFFFFF;
+  --ink: #15233B;
+  --muted: #566274;
+  --line: #D3DAD4;
+  --soft: #E6EBE7;
+  --lumpsum: #2F5BD3;
+  --sip: #0E7C66;
+  --stp: #A86A10;
+  --swp: #B23D68;
+  --switch: #6A47BF;
+  --focus: #2F5BD3;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F1724;
+    --surface: #172133;
+    --ink: #E7ECF3;
+    --muted: #9AA6B8;
+    --line: #2A3850;
+    --soft: #1D2a40;
+    --lumpsum: #7FA0FF;
+    --sip: #4FD1AE;
+    --stp: #F2B54C;
+    --swp: #F48AB0;
+    --switch: #B9A0FF;
+    --focus: #7FA0FF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F1724;
+  --surface: #172133;
+  --ink: #E7ECF3;
+  --muted: #9AA6B8;
+  --line: #2A3850;
+  --soft: #1D2a40;
+  --lumpsum: #7FA0FF;
+  --sip: #4FD1AE;
+  --stp: #F2B54C;
+  --swp: #F48AB0;
+  --switch: #B9A0FF;
+  --focus: #7FA0FF;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 72px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: "Bricolage Grotesque", "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.1;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+
+/* Sticky jump bar */
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--surface);
+}
+.jump {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.jump .wrap { display: flex; gap: .4rem; align-items: center; overflow-x: auto; padding-top: .7rem; padding-bottom: .7rem; scrollbar-width: none; }
+.jump .wrap::-webkit-scrollbar { display: none; }
+.jump strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; margin-right: .6rem; white-space: nowrap; font-size: 1rem; }
+.jump a {
+  text-decoration: none; white-space: nowrap; font-size: .92rem; font-weight: 500;
+  padding: .3rem .8rem; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--muted);
+}
+.jump a:hover { color: var(--ink); border-color: var(--ink); }
+.jump a .dot { display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: var(--c); margin-right: .45rem; vertical-align: .05em; }
+
+/* Hero */
+.hero { padding: clamp(2.5rem, 7vw, 5rem) 0 2.5rem; }
+.hero h1 { font-size: clamp(2.3rem, 6vw, 4.2rem); font-weight: 800; max-width: 15ch; }
+.hero p.lede { font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--muted); max-width: 60ch; margin: 1.2rem 0 0; }
+
+/* Overview: the five flows */
+.flows { margin-top: 2.5rem; border-top: 2px solid var(--ink); }
+.flow-row {
+  display: grid; grid-template-columns: 9rem minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 1.5rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.flow-row:hover .name { color: var(--c); }
+.flow-row .name { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--ink); transition: color .15s; }
+.flow-row .desc { color: var(--muted); font-size: .98rem; }
+@media (max-width: 760px) {
+  .flow-row { grid-template-columns: 1fr; gap: .4rem; }
+  .flow-row .glyph { order: 3; max-width: 360px; }
+}
+
+/* Flow glyph */
+.glyph { color: var(--c); width: 100%; }
+.glyph svg { display: block; width: 100%; height: auto; overflow: visible; }
+.glyph .box { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
+.glyph .lbl { fill: var(--ink); font: 600 13px "Instrument Sans", system-ui, sans-serif; }
+.glyph .track { stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 3 5; opacity: .55; }
+.glyph .cap { fill: var(--muted); font: 500 11.5px "Instrument Sans", system-ui, sans-serif; }
+.glyph .coin { fill: currentColor; }
+.glyph .coin { animation: travel var(--dur, 2.6s) linear infinite; animation-delay: var(--delay, 0s); }
+@keyframes travel {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(104px); opacity: 0; }
+}
+.glyph.once .coin { animation-name: travel-once; animation-duration: 4.2s; }
+@keyframes travel-once {
+  0% { transform: translateX(0); opacity: 0; }
+  8% { opacity: 1; }
+  45% { transform: translateX(104px); opacity: 1; }
+  55%, 100% { transform: translateX(104px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glyph .coin { animation: none; opacity: 1; }
+  .glyph .coin:nth-of-type(2) { transform: translateX(40px); }
+  .glyph .coin:nth-of-type(3) { transform: translateX(80px); }
+  .glyph.once .coin { transform: translateX(52px); }
+}
+
+/* Transaction sections */
+.txn { padding: clamp(3rem, 7vw, 5rem) 0; border-top: 1px solid var(--line); }
+.txn-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2rem; align-items: end; }
+.txn-head .kicker { color: var(--c); font-weight: 600; font-size: .95rem; margin: 0 0 .5rem; }
+.txn-head h2 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; }
+.txn-head h2 .full { display: block; font-size: .45em; font-weight: 500; color: var(--muted); margin-top: .5rem; letter-spacing: 0; }
+.txn-head .glyph { max-width: 380px; justify-self: end; }
+.txn-intro { max-width: 68ch; margin: 1.5rem 0 0; }
+.txn-body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); margin-top: 2.2rem; }
+@media (max-width: 860px) {
+  .txn-head, .txn-body { grid-template-columns: 1fr; }
+  .txn-head .glyph { justify-self: start; }
+}
+.txn h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+
+ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; }
+ol.steps li {
+  counter-increment: s; position: relative; padding: 0 0 1.15rem 3rem; margin: 0;
+}
+ol.steps li::before {
+  content: counter(s);
+  position: absolute; left: 0; top: 0;
+  width: 2rem; height: 2rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font: 700 .95rem "Bricolage Grotesque", system-ui, sans-serif;
+  color: var(--surface); background: var(--c);
+}
+ol.steps li::after {
+  content: ""; position: absolute; left: calc(1rem - 1px); top: 2.2rem; bottom: .2rem;
+  width: 2px; background: var(--line);
+}
+ol.steps li:last-child::after { display: none; }
+ol.steps li b { display: block; font-weight: 600; }
+ol.steps li span { color: var(--muted); font-size: .98rem; }
+
+.facts { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 4px 4px 14px 14px; padding: 1.4rem 1.5rem; }
+.facts dl { margin: 0; display: grid; grid-template-columns: 1fr; }
+.facts dt { font-weight: 600; font-size: .9rem; color: var(--c); margin-top: .9rem; }
+.facts dt:first-child { margin-top: 0; }
+.facts dd { margin: .15rem 0 0; font-size: .97rem; }
+.example {
+  margin-top: 1.2rem; padding: 1rem 1.2rem; border-radius: 12px; background: var(--soft);
+  font-size: .97rem;
+}
+.example b { color: var(--c); }
+
+/* Summary */
+.summary { padding: clamp(3rem, 7vw, 5rem) 0; border-top: 2px solid var(--ink); }
+.summary h2 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; }
+.summary > .wrap > p { color: var(--muted); max-width: 64ch; }
+.table-scroll { overflow-x: auto; margin-top: 2rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: .95rem; }
+th, td { text-align: left; padding: .9rem 1rem; vertical-align: top; border-bottom: 1px solid var(--line); }
+thead th { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1rem; font-weight: 700; background: var(--soft); }
+tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
+tbody th { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.15rem; white-space: nowrap; }
+tbody th::before { content: ""; display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; background: var(--c); margin-right: .55rem; vertical-align: .1em; }
+.yes { font-weight: 600; }
+
+.takeaways { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem 2.5rem; margin-top: 3rem; }
+.takeaways div { border-left: 3px solid var(--c, var(--ink)); padding-left: 1rem; }
+.takeaways b { display: block; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.15rem; margin-bottom: .25rem; }
+.takeaways p { margin: 0; color: var(--muted); font-size: .97rem; }
+
+/* Common rules */
+.rules { padding: clamp(3rem, 7vw, 5rem) 0; border-top: 1px solid var(--line); }
+.rules h2 { font-size: clamp(1.7rem, 3.6vw, 2.4rem); font-weight: 800; margin-bottom: 1.5rem; }
+.rule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.3rem; }
+.rule h3 { font-size: 1.1rem; margin-bottom: .45rem; }
+.rule p { margin: 0; font-size: .96rem; color: var(--muted); }
+.rule p + p { margin-top: .5rem; }
+
+.cutoff { width: 100%; min-width: 0; font-size: .92rem; margin-top: .6rem; }
+.cutoff td, .cutoff th { padding: .45rem .2rem; border-bottom: 1px dashed var(--line); background: none; font-family: inherit; font-size: inherit; }
+.cutoff tr:last-child td { border-bottom: 0; }
+
+footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+footer p { max-width: 80ch; margin: 0; }
+
+[data-t="lumpsum"] { --c: var(--lumpsum); }
+[data-t="sip"] { --c: var(--sip); }
+[data-t="stp"] { --c: var(--stp); }
+[data-t="swp"] { --c: var(--swp); }
+[data-t="switch"] { --c: var(--switch); }
+</style>
+</head>
+<body>
+
+<nav class="jump" aria-label="Jump to a transaction type">
+  <div class="wrap">
+    <strong>MF transactions</strong>
+    <a href="#lumpsum" data-t="lumpsum"><span class="dot"></span>Lumpsum</a>
+    <a href="#sip" data-t="sip"><span class="dot"></span>SIP</a>
+    <a href="#stp" data-t="stp"><span class="dot"></span>STP</a>
+    <a href="#swp" data-t="swp"><span class="dot"></span>SWP</a>
+    <a href="#switch" data-t="switch"><span class="dot"></span>Switch</a>
+    <a href="#summary" style="--c: var(--ink)"><span class="dot"></span>Summary</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Five ways money moves in a mutual fund</h1>
+    <p class="lede">Every mutual fund transaction is either money going in, money coming out, or money moving between schemes, once or on a schedule. Here’s how each one is placed, step by step, and what happens after you hit submit.</p>
+
+    <div class="flows">
+      <a class="flow-row" href="#lumpsum" data-t="lumpsum">
+        <span class="name">Lumpsum</span>
+        <span class="desc">One payment from your bank into a scheme.</span>
+        <span class="glyph once" data-from="Bank" data-to="Scheme" data-cap="once"></span>
+      </a>
+      <a class="flow-row" href="#sip" data-t="sip">
+        <span class="name">SIP</span>
+        <span class="desc">A fixed amount from your bank into a scheme, every period.</span>
+        <span class="glyph" data-from="Bank" data-to="Scheme" data-cap="every month"></span>
+      </a>
+      <a class="flow-row" href="#stp" data-t="stp">
+        <span class="name">STP</span>
+        <span class="desc">A fixed amount moved from one scheme to another, every period.</span>
+        <span class="glyph" data-from="Scheme A" data-to="Scheme B" data-cap="every month"></span>
+      </a>
+      <a class="flow-row" href="#swp" data-t="swp">
+        <span class="name">SWP</span>
+        <span class="desc">A fixed amount redeemed from a scheme to your bank, every period.</span>
+        <span class="glyph" data-from="Scheme" data-to="Bank" data-cap="every month"></span>
+      </a>
+      <a class="flow-row" href="#switch" data-t="switch">
+        <span class="name">Switch</span>
+        <span class="desc">Units moved from one scheme or plan to another, once.</span>
+        <span class="glyph once" data-from="Scheme A" data-to="Scheme B" data-cap="once"></span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- LUMPSUM -->
+<section class="txn" id="lumpsum" data-t="lumpsum">
+  <div class="wrap">
+    <div class="txn-head">
+      <div>
+        <p class="kicker">Money in, once</p>
+        <h2>Lumpsum<span class="full">One-time purchase</span></h2>
+      </div>
+      <div class="glyph once" data-from="Bank" data-to="Scheme" data-cap="once"></div>
+    </div>
+    <p class="txn-intro">You invest the whole amount in a single transaction. Units are allotted at the NAV of the day your money reaches the fund (subject to the cut-off time). It suits investors with a windfall, a bonus, or a long horizon who are comfortable with the entry price on one day.</p>
+
+    <div class="txn-body">
+      <div>
+        <h3>How it’s placed</h3>
+        <ol class="steps">
+          <li><b>Complete KYC</b><span>PAN, Aadhaar-linked KYC with a KRA, a registered bank account, mobile and email. This is a one-time step for all fund houses.</span></li>
+          <li><b>Pick the channel</b><span>AMC website or app, MF Central, an investment platform or broker, an exchange platform (BSE StAR MF, NSE NMF II) through a distributor, or a physical form at an AMC or RTA (CAMS / KFintech) branch.</span></li>
+          <li><b>Choose scheme, plan and option</b><span>Select the scheme, then Direct or Regular plan, and Growth or IDCW option. Check the minimum amount (often ₹100 to ₹5,000).</span></li>
+          <li><b>Enter amount and folio</b><span>Invest in an existing folio or let a new one be created. Confirm nominee details.</span></li>
+          <li><b>Pay</b><span>Net banking, UPI, NEFT/RTGS, or cheque/DD for offline forms. Payment must come from your own registered bank account; third-party payments are rejected.</span></li>
+          <li><b>Authenticate</b><span>Approve the order with the OTP or link sent to your registered mobile/email.</span></li>
+          <li><b>Units allotted</b><span>Allotted at the applicable NAV once funds are realised. A confirmation (account statement) arrives by email/SMS, and the holding shows in your CAS.</span></li>
+        </ol>
+      </div>
+      <aside class="facts">
+        <dl>
+          <dt>NAV applied</dt>
+          <dd>Same-day NAV if the application and funds both reach the fund before cut-off (3:00 PM for most schemes); otherwise the next business day.</dd>
+          <dt>Charges</dt>
+          <dd>No entry load. Stamp duty of 0.005% is deducted from the purchase amount.</dd>
+          <dt>Mandate needed?</dt>
+          <dd>No. You pay each time.</dd>
+          <dt>Risk to watch</dt>
+          <dd>Timing: the whole amount enters at one price. An STP is a common way to soften this.</dd>
+        </dl>
+        <div class="example"><b>Example:</b> You invest ₹1,00,000 in an equity fund at 1:45 PM via UPI and the money is credited before 3 PM. If that day’s NAV is ₹50, you get 2,000 units (minus stamp duty).</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- SIP -->
+<section class="txn" id="sip" data-t="sip">
+  <div class="wrap">
+    <div class="txn-head">
+      <div>
+        <p class="kicker">Money in, on a schedule</p>
+        <h2>SIP<span class="full">Systematic Investment Plan</span></h2>
+      </div>
+      <div class="glyph" data-from="Bank" data-to="Scheme" data-cap="every month"></div>
+    </div>
+    <p class="txn-intro">A fixed amount is debited from your bank on a chosen date and invested automatically. Because you buy more units when prices are low and fewer when they’re high, SIPs average out your purchase cost over time (rupee cost averaging) and build a saving habit.</p>
+
+    <div class="txn-body">
+      <div>
+        <h3>How it’s placed</h3>
+        <ol class="steps">
+          <li><b>Register a bank mandate</b><span>Set up an e-NACH, UPI AutoPay or physical NACH mandate with a maximum debit limit. e-NACH and UPI AutoPay are approved online; a paper mandate can take a couple of weeks.</span></li>
+          <li><b>Choose the scheme</b><span>Scheme, plan (Direct/Regular) and option (Growth/IDCW), as for a lumpsum.</span></li>
+          <li><b>Set SIP details</b><span>Instalment amount, frequency (daily, weekly, monthly, quarterly), SIP date, start month and end date or “until cancelled”. Optional: a step-up (top-up) that raises the amount every year.</span></li>
+          <li><b>Pay the first instalment (optional)</b><span>Many platforms let you pay the first instalment immediately, then the mandate takes over.</span></li>
+          <li><b>Authenticate and register</b><span>Approve with OTP. The AMC registers the SIP, which usually takes a few working days before the first auto-debit.</span></li>
+          <li><b>Automatic debits</b><span>On each SIP date, the amount is debited and units are allotted at that day’s NAV, subject to fund realisation and cut-off.</span></li>
+          <li><b>Manage it</b><span>Pause, modify (where allowed), or cancel at any time. Cancellation needs some lead time before the next debit date.</span></li>
+        </ol>
+      </div>
+      <aside class="facts">
+        <dl>
+          <dt>Minimum</dt>
+          <dd>Often ₹100 to ₹500 per instalment, with a minimum number of instalments set by the scheme.</dd>
+          <dt>NAV applied</dt>
+          <dd>NAV of the day the debited money is realised by the fund (before cut-off).</dd>
+          <dt>Failed debits</dt>
+          <dd>Insufficient balance means no units that month, and your bank may levy a bounce charge. Several consecutive failures can lead the AMC to cancel the SIP.</dd>
+          <dt>Tax and exit load</dt>
+          <dd>Each instalment is a separate purchase. Holding period, exit load and capital gains are counted per instalment on a first-in, first-out basis.</dd>
+        </dl>
+        <div class="example"><b>Example:</b> ₹5,000 every 5th of the month. NAV ₹50 in January gives 100 units; NAV ₹40 in February gives 125 units. Your average cost becomes about ₹44.44, below the simple average NAV of ₹45.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- STP -->
+<section class="txn" id="stp" data-t="stp">
+  <div class="wrap">
+    <div class="txn-head">
+      <div>
+        <p class="kicker">Scheme to scheme, on a schedule</p>
+        <h2>STP<span class="full">Systematic Transfer Plan</span></h2>
+      </div>
+      <div class="glyph" data-from="Scheme A" data-to="Scheme B" data-cap="every month"></div>
+    </div>
+    <p class="txn-intro">You park a lump sum in one scheme (usually a liquid or short-duration debt fund) and transfer a fixed amount from it into another scheme (usually equity) at regular intervals. It combines lumpsum convenience with SIP-style averaging, while the parked money keeps earning debt-fund returns.</p>
+
+    <div class="txn-body">
+      <div>
+        <h3>How it’s placed</h3>
+        <ol class="steps">
+          <li><b>Invest in the source scheme</b><span>Place a lumpsum in the source fund. STP only works within the same fund house, so both schemes must belong to the same AMC.</span></li>
+          <li><b>Choose source and target</b><span>Select the source (transferor) scheme and the target (transferee) scheme, plan and option.</span></li>
+          <li><b>Set STP details</b><span>Transfer amount, frequency (daily, weekly, monthly, quarterly), date, number of instalments or end date. The source must meet the AMC’s minimum balance.</span></li>
+          <li><b>Pick the STP type</b><span>Fixed STP (same amount each time), capital appreciation STP (only the gains move), or flex/value STP offered by some AMCs (amount varies with market levels).</span></li>
+          <li><b>Authenticate</b><span>Approve with OTP. No bank mandate is needed because no money leaves the fund house.</span></li>
+          <li><b>Automatic transfers</b><span>On each date, units are redeemed from the source at its NAV and the proceeds buy units in the target at its applicable NAV.</span></li>
+        </ol>
+      </div>
+      <aside class="facts">
+        <dl>
+          <dt>What happens legally</dt>
+          <dd>Each transfer is a redemption from the source plus a purchase in the target.</dd>
+          <dt>Tax</dt>
+          <dd>Each transfer-out can create capital gains (usually small for liquid funds) that are taxable.</dd>
+          <dt>Exit load</dt>
+          <dd>Charged on the source if its exit-load period applies. Liquid funds have a graded load only for the first 7 days.</dd>
+          <dt>Stops when</dt>
+          <dd>Instalments are completed, the source balance runs out, or you cancel.</dd>
+        </dl>
+        <div class="example"><b>Example:</b> You receive ₹6,00,000 and put it in a liquid fund, then set an STP of ₹50,000 a month into a flexi-cap fund of the same AMC for 12 months. The unmoved balance keeps earning liquid-fund returns.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- SWP -->
+<section class="txn" id="swp" data-t="swp">
+  <div class="wrap">
+    <div class="txn-head">
+      <div>
+        <p class="kicker">Money out, on a schedule</p>
+        <h2>SWP<span class="full">Systematic Withdrawal Plan</span></h2>
+      </div>
+      <div class="glyph" data-from="Scheme" data-to="Bank" data-cap="every month"></div>
+    </div>
+    <p class="txn-intro">The reverse of a SIP. A fixed amount is redeemed from your investment at regular intervals and credited to your bank account. Retirees and anyone needing a steady income use it, while the remaining units stay invested.</p>
+
+    <div class="txn-body">
+      <div>
+        <h3>How it’s placed</h3>
+        <ol class="steps">
+          <li><b>Hold units in the scheme</b><span>You need an existing investment large enough to meet the SWP minimum balance and amount.</span></li>
+          <li><b>Choose scheme and folio</b><span>Select the scheme and folio from which money will be withdrawn.</span></li>
+          <li><b>Set SWP details</b><span>Withdrawal amount, frequency (monthly or quarterly are common), date, start and end date or number of instalments.</span></li>
+          <li><b>Pick the SWP type</b><span>Fixed SWP (same amount each time) or appreciation SWP (only the gains are withdrawn, protecting the original capital).</span></li>
+          <li><b>Confirm payout bank</b><span>Proceeds always go to your registered bank account in the folio.</span></li>
+          <li><b>Authenticate</b><span>Approve with OTP (two-factor authentication is mandatory for redemptions).</span></li>
+          <li><b>Automatic redemptions</b><span>On each date, units worth the amount are redeemed at that day’s NAV and the money is credited within the SEBI payout timeline (a few working days).</span></li>
+        </ol>
+      </div>
+      <aside class="facts">
+        <dl>
+          <dt>NAV applied</dt>
+          <dd>NAV of the SWP date, under the 3:00 PM redemption cut-off.</dd>
+          <dt>Tax</dt>
+          <dd>Only the gains portion of each withdrawal is taxed, not the whole amount. This often makes SWP more tax-efficient than IDCW payouts.</dd>
+          <dt>Exit load</dt>
+          <dd>Applies to units redeemed within the exit-load period, so plan the start date accordingly.</dd>
+          <dt>Watch out for</dt>
+          <dd>Withdrawing more than the fund earns eats into capital, and falling markets mean more units are sold for the same amount.</dd>
+        </dl>
+        <div class="example"><b>Example:</b> A ₹20,00,000 balanced advantage fund with an SWP of ₹12,000 a month withdraws about 7.2% a year. If the fund returns more than that over time, the corpus keeps growing.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- SWITCH -->
+<section class="txn" id="switch" data-t="switch">
+  <div class="wrap">
+    <div class="txn-head">
+      <div>
+        <p class="kicker">Scheme to scheme, once</p>
+        <h2>Switch<span class="full">One-time transfer between schemes</span></h2>
+      </div>
+      <div class="glyph once" data-from="Scheme A" data-to="Scheme B" data-cap="once"></div>
+    </div>
+    <p class="txn-intro">A switch moves all or part of your holding from one scheme or plan to another within the same fund house, in one go, without the money touching your bank account. Common uses are rebalancing, moving from a Regular to a Direct plan, or changing from IDCW to Growth.</p>
+
+    <div class="txn-body">
+      <div>
+        <h3>How it’s placed</h3>
+        <ol class="steps">
+          <li><b>Select the switch-out scheme</b><span>Pick the scheme, plan and folio you’re moving out of.</span></li>
+          <li><b>Select the switch-in scheme</b><span>Choose the target scheme, plan (Direct/Regular) and option (Growth/IDCW) of the same AMC.</span></li>
+          <li><b>Enter the quantity</b><span>Switch by amount, by number of units, or all units. The amount must meet the target scheme’s minimum.</span></li>
+          <li><b>Review the impact</b><span>Check the exit load and capital gains that the switch-out will trigger before confirming.</span></li>
+          <li><b>Authenticate</b><span>Approve with OTP; the time of verification decides the applicable NAV.</span></li>
+          <li><b>Processing</b><span>Units are redeemed from the source at its NAV, and the proceeds buy units in the target at its applicable NAV. A confirmation shows both legs.</span></li>
+        </ol>
+      </div>
+      <aside class="facts">
+        <dl>
+          <dt>NAV applied</dt>
+          <dd>Switch-out follows the source’s redemption cut-off; switch-in follows the target’s purchase cut-off and is based on when the redemption proceeds become available to it.</dd>
+          <dt>Tax</dt>
+          <dd>A switch is a sale for tax purposes, even between plans of the same scheme (such as Regular to Direct).</dd>
+          <dt>Exit load</dt>
+          <dd>Applies on the switch-out if within the load period. Stamp duty applies on the switch-in.</dd>
+          <dt>Across fund houses?</dt>
+          <dd>Not possible. To move between AMCs, redeem from one and make a fresh purchase in the other.</dd>
+        </dl>
+        <div class="example"><b>Example:</b> You hold 1,000 units of a fund’s Regular plan bought three years ago. Switching to its Direct plan lowers the expense ratio going forward, but the gains so far become taxable as long-term capital gains.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- SUMMARY -->
+<section class="summary" id="summary">
+  <div class="wrap">
+    <h2>Summary</h2>
+    <p>The five transactions differ on just three questions: where the money comes from, where it goes, and whether it happens once or repeats. The table puts them side by side.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Money moves</th>
+            <th scope="col">Frequency</th>
+            <th scope="col">Bank mandate</th>
+            <th scope="col">Taxable event</th>
+            <th scope="col">Exit load possible</th>
+            <th scope="col">Best for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-t="lumpsum">
+            <th scope="row">Lumpsum</th>
+            <td>Bank → scheme</td>
+            <td>Once</td>
+            <td>No</td>
+            <td>No (purchase)</td>
+            <td>No</td>
+            <td>Deploying a large sum at once, long horizon</td>
+          </tr>
+          <tr data-t="sip">
+            <th scope="row">SIP</th>
+            <td>Bank → scheme</td>
+            <td>Recurring</td>
+            <td class="yes">Yes (NACH / UPI AutoPay)</td>
+            <td>No (purchase)</td>
+            <td>No</td>
+            <td>Investing from monthly income, rupee cost averaging</td>
+          </tr>
+          <tr data-t="stp">
+            <th scope="row">STP</th>
+            <td>Scheme → scheme (same AMC)</td>
+            <td>Recurring</td>
+            <td>No</td>
+            <td class="yes">Yes, each transfer-out</td>
+            <td>Yes, on source</td>
+            <td>Staggering a lump sum into equity</td>
+          </tr>
+          <tr data-t="swp">
+            <th scope="row">SWP</th>
+            <td>Scheme → bank</td>
+            <td>Recurring</td>
+            <td>No</td>
+            <td class="yes">Yes, each withdrawal (gains only)</td>
+            <td>Yes</td>
+            <td>Regular income, retirement cash flow</td>
+          </tr>
+          <tr data-t="switch">
+            <th scope="row">Switch</th>
+            <td>Scheme → scheme (same AMC)</td>
+            <td>Once</td>
+            <td>No</td>
+            <td class="yes">Yes, on switch-out</td>
+            <td>Yes, on source</td>
+            <td>Rebalancing, Regular to Direct, changing option</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="takeaways">
+      <div style="--c: var(--sip)"><b>Money in</b><p>Lumpsum and SIP are pure purchases. No tax at entry, only stamp duty.</p></div>
+      <div style="--c: var(--stp)"><b>Money moving</b><p>STP and Switch are a redemption plus a purchase, so tax and exit load apply on the way out.</p></div>
+      <div style="--c: var(--swp)"><b>Money out</b><p>SWP is a series of redemptions. Only the gain in each withdrawal is taxed.</p></div>
+      <div style="--c: var(--ink)"><b>Recurring needs setup</b><p>SIP needs a bank mandate; STP and SWP need only an instruction to the AMC.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMON RULES -->
+<section class="rules">
+  <div class="wrap">
+    <h2>Rules that apply to every transaction</h2>
+    <div class="rule-grid">
+      <div class="rule">
+        <h3>Cut-off times decide the NAV</h3>
+        <p>Before cut-off on a business day gets that day’s NAV; after it gets the next business day’s.</p>
+        <table class="cutoff">
+          <tbody>
+            <tr><td>Purchase, most schemes</td><td>3:00 PM</td></tr>
+            <tr><td>Purchase, liquid and overnight</td><td>1:30 PM</td></tr>
+            <tr><td>Redemption / switch-out</td><td>3:00 PM</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rule">
+        <h3>Purchases depend on fund realisation</h3>
+        <p>For any purchase, SIP instalment, STP-in or switch-in, the NAV applies only once the money is actually credited to the scheme’s account, not just when you click pay.</p>
+      </div>
+      <div class="rule">
+        <h3>Two-factor authentication</h3>
+        <p>Redemptions, switches, STPs and SWPs need an OTP sent to your registered mobile and email. The NAV depends on when it’s verified.</p>
+      </div>
+      <div class="rule">
+        <h3>KYC and folio details</h3>
+        <p>Valid KYC, PAN, a registered bank account and nominee (or opt-out) are required. Payouts only go to the registered bank account.</p>
+      </div>
+      <div class="rule">
+        <h3>Where to track</h3>
+        <p>Each transaction generates an account statement from the AMC/RTA. A monthly Consolidated Account Statement (CAS) from CAMS, KFintech or the depositories covers all funds in one place.</p>
+      </div>
+      <div class="rule">
+        <h3>Read the scheme documents</h3>
+        <p>Minimum amounts, exit loads and STP/SWP options differ by scheme. The Scheme Information Document (SID) and KIM have the exact numbers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>This guide explains how transactions work in Indian mutual funds for general understanding. It is not investment, tax or legal advice. Cut-off times, charges and tax rules can change, so confirm current details with the fund house, your distributor, or SEBI and AMFI before transacting. Mutual fund investments are subject to market risks.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var ns = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(ns, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".glyph").forEach(function (g) {
+    var once = g.classList.contains("once");
+    var svg = el("svg", { viewBox: "0 0 320 80", role: "img", "aria-label": g.dataset.from + " to " + g.dataset.to + ", " + g.dataset.cap });
+    svg.appendChild(el("rect", { class: "box", x: 1, y: 12, width: 98, height: 44, rx: 10 }));
+    svg.appendChild(el("text", { class: "lbl", x: 50, y: 38.5, "text-anchor": "middle" }, g.dataset.from));
+    svg.appendChild(el("rect", { class: "box", x: 221, y: 12, width: 98, height: 44, rx: 10 }));
+    svg.appendChild(el("text", { class: "lbl", x: 270, y: 38.5, "text-anchor": "middle" }, g.dataset.to));
+    svg.appendChild(el("line", { class: "track", x1: 104, y1: 34, x2: 212, y2: 34 }));
+    svg.appendChild(el("path", { d: "M208 28 L216 34 L208 40", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+    var n = once ? 1 : 3;
+    for (var i = 0; i < n; i++) {
+      var c = el("circle", { class: "coin", cx: 108, cy: 34, r: once ? 6 : 4.5 });
+      c.style.setProperty("--delay", (i * 0.87) + "s");
+      svg.appendChild(c);
+    }
+    svg.appendChild(el("text", { class: "cap", x: 160, y: 72, "text-anchor": "middle" }, g.dataset.cap));
+    g.appendChild(svg);
+  });
+})();
+</script>
+</body>
+</html>
