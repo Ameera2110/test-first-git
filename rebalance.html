@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rebalancing your mutual fund portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F1F4F1;
+  --surface: #FFFFFF;
+  --ink: #15233B;
+  --muted: #566274;
+  --line: #D3DAD4;
+  --soft: #E6EBE7;
+  --equity: #2F5BD3;
+  --debt: #0E7C66;
+  --gold: #A86A10;
+  --intl: #6A47BF;
+  --warn: #B23D68;
+  --ok: #0E7C66;
+  --focus: #2F5BD3;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F1724; --surface: #172133; --ink: #E7ECF3; --muted: #9AA6B8;
+    --line: #2A3850; --soft: #1D2A40;
+    --equity: #7FA0FF; --debt: #4FD1AE; --gold: #F2B54C; --intl: #B9A0FF;
+    --warn: #F48AB0; --ok: #4FD1AE; --focus: #7FA0FF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F1724; --surface: #172133; --ink: #E7ECF3; --muted: #9AA6B8;
+  --line: #2A3850; --soft: #1D2A40;
+  --equity: #7FA0FF; --debt: #4FD1AE; --gold: #F2B54C; --intl: #B9A0FF;
+  --warn: #F48AB0; --ok: #4FD1AE; --focus: #7FA0FF;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 72px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 1.0625rem; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif; line-height: 1.1; margin: 0; letter-spacing: -0.015em; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+p { margin: 0 0 1rem; }
+
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.jump { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.jump .wrap { display: flex; gap: .4rem; align-items: center; overflow-x: auto; padding-top: .7rem; padding-bottom: .7rem; scrollbar-width: none; }
+.jump .wrap::-webkit-scrollbar { display: none; }
+.jump strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; margin-right: .6rem; white-space: nowrap; }
+.jump a { text-decoration: none; white-space: nowrap; font-size: .92rem; font-weight: 500; padding: .3rem .8rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.jump a:hover { color: var(--ink); border-color: var(--ink); }
+
+/* Hero */
+.hero { padding: clamp(2.5rem, 7vw, 5rem) 0 3rem; }
+.hero h1 { font-size: clamp(2.3rem, 6vw, 4.2rem); font-weight: 800; max-width: 16ch; }
+.hero .lede { font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--muted); max-width: 60ch; margin-top: 1.2rem; }
+
+/* Drift figure: the signature element */
+.drift { margin-top: 2.5rem; border-top: 2px solid var(--ink); padding-top: 1.5rem; }
+.drift-row { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 1rem; align-items: center; margin-bottom: .9rem; }
+.drift-row .tag { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 700; font-size: 1.05rem; }
+.drift-row .tag small { display: block; font-family: "Instrument Sans", system-ui, sans-serif; font-weight: 400; font-size: .85rem; color: var(--muted); }
+.bar { display: flex; height: 2.6rem; border-radius: 8px; overflow: hidden; background: var(--soft); }
+.bar span { display: flex; align-items: center; padding-left: .6rem; color: var(--surface); font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; transition: flex-basis .7s cubic-bezier(.4,.1,.2,1); }
+.bar span.equity { background: var(--equity); }
+.bar span.debt { background: var(--debt); }
+.bar span.gold { background: var(--gold); }
+.bar span.intl { background: var(--intl); }
+.drift-note { color: var(--muted); font-size: .95rem; margin-top: .6rem; max-width: 70ch; }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font-size: .9rem; color: var(--muted); margin-top: 1rem; }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; margin-right: .4rem; vertical-align: -.05em; }
+@media (max-width: 600px) { .drift-row { grid-template-columns: 1fr; gap: .3rem; } }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+
+/* Sections */
+.block { padding: clamp(3rem, 7vw, 5rem) 0; border-top: 1px solid var(--line); }
+.block h2 { font-size: clamp(1.9rem, 4.2vw, 2.8rem); font-weight: 800; margin-bottom: 1rem; }
+.block .intro { max-width: 68ch; color: var(--muted); font-size: 1.08rem; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem 2.5rem; margin-top: 2rem; }
+.point { border-left: 3px solid var(--c, var(--ink)); padding-left: 1rem; }
+.point h3 { font-size: 1.2rem; margin-bottom: .4rem; }
+.point p { color: var(--muted); font-size: .98rem; margin: 0; }
+
+/* When: three strategies */
+.strategies { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 2rem; }
+.strat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem; display: flex; flex-direction: column; }
+.strat h3 { font-size: 1.3rem; margin-bottom: .2rem; }
+.strat .rule { font-weight: 600; color: var(--c); margin-bottom: .7rem; font-size: .97rem; }
+.strat p { font-size: .97rem; margin-bottom: .6rem; }
+.strat .pc { margin-top: auto; padding-top: .8rem; border-top: 1px dashed var(--line); font-size: .9rem; color: var(--muted); }
+.strat.pick { border: 2px solid var(--c); }
+.strat .badge { align-self: flex-start; font-size: .8rem; font-weight: 600; background: var(--c); color: var(--surface); border-radius: 999px; padding: .1rem .6rem; margin-bottom: .7rem; }
+
+/* Methods: ordered from cheapest to costliest — a real sequence */
+.methods { margin-top: 2rem; border-top: 2px solid var(--ink); }
+.method { display: grid; grid-template-columns: 3rem minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem 2rem; padding: 1.4rem 0; border-bottom: 1px solid var(--line); }
+.method .n { font: 800 2rem "Bricolage Grotesque", system-ui, sans-serif; color: var(--muted); line-height: 1; }
+.method h3 { font-size: 1.3rem; margin-bottom: .35rem; }
+.method p { margin: 0; font-size: .98rem; }
+.method .cost { font-size: .95rem; color: var(--muted); }
+.method .cost b { color: var(--ink); display: block; margin-bottom: .2rem; }
+@media (max-width: 760px) { .method { grid-template-columns: 2.4rem minmax(0, 1fr); } .method .cost { grid-column: 2; } }
+
+/* Steps */
+ol.steps { list-style: none; counter-reset: s; margin: 2rem 0 0; padding: 0; max-width: 760px; }
+ol.steps li { counter-increment: s; position: relative; padding: 0 0 1.3rem 3.2rem; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center; font: 700 .95rem "Bricolage Grotesque", system-ui, sans-serif; color: var(--surface); background: var(--ink); }
+ol.steps li::after { content: ""; position: absolute; left: calc(1.05rem - 1px); top: 2.3rem; bottom: .2rem; width: 2px; background: var(--line); }
+ol.steps li:last-child::after { display: none; }
+ol.steps b { display: block; font-weight: 600; font-size: 1.05rem; }
+ol.steps span { color: var(--muted); font-size: .98rem; }
+
+/* Calculator */
+.calc { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(1.2rem, 3vw, 2rem); margin-top: 2rem; }
+.calc-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); }
+@media (max-width: 900px) { .calc-grid { grid-template-columns: 1fr; } }
+.calc h3 { font-size: 1.2rem; margin-bottom: 1rem; }
+.inputs { width: 100%; border-collapse: collapse; }
+.inputs th { text-align: left; font-size: .85rem; font-weight: 600; color: var(--muted); padding: 0 .4rem .5rem 0; }
+.inputs td { padding: .3rem .4rem .3rem 0; vertical-align: middle; }
+.inputs td:first-child { font-weight: 600; white-space: nowrap; }
+.inputs td:first-child i { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; margin-right: .5rem; }
+.field { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.field span { padding: 0 .1rem 0 .6rem; color: var(--muted); font-size: .95rem; }
+.field span.after { padding: 0 .6rem 0 .1rem; }
+.field input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 1rem; padding: .5rem .5rem; }
+.field input:focus-visible { outline: none; }
+.field:focus-within { outline: 3px solid var(--focus); outline-offset: 1px; }
+.row-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.2rem; }
+@media (max-width: 480px) { .row-inline { grid-template-columns: 1fr; } }
+label.lbl { display: block; font-size: .85rem; font-weight: 600; color: var(--muted); margin-bottom: .3rem; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; margin-top: 1.2rem; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 500 .92rem "Instrument Sans", system-ui, sans-serif; padding: .45rem .9rem; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.hint { font-size: .88rem; color: var(--muted); margin-top: .6rem; }
+.sumcheck { font-size: .9rem; margin-top: .5rem; font-weight: 600; }
+.sumcheck.bad { color: var(--warn); }
+.sumcheck.good { color: var(--ok); }
+
+.result-bars .drift-row { grid-template-columns: 4.5rem minmax(0, 1fr); }
+.result-bars .bar { height: 2rem; }
+.out-scroll { overflow-x: auto; margin-top: 1.2rem; }
+.out { width: 100%; border-collapse: collapse; font-size: .94rem; min-width: 420px; }
+.out th, .out td { padding: .55rem .4rem; border-bottom: 1px solid var(--line); text-align: right; }
+.out th:first-child, .out td:first-child { text-align: left; }
+.out thead th { font-weight: 600; color: var(--muted); font-size: .85rem; }
+.act-buy { color: var(--ok); font-weight: 600; }
+.act-sell { color: var(--warn); font-weight: 600; }
+.act-hold { color: var(--muted); }
+.flag { display: inline-block; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 0 .45rem; margin-left: .3rem; background: var(--warn); color: var(--surface); }
+.verdict { margin-top: 1.2rem; padding: .9rem 1rem; border-radius: 10px; background: var(--soft); font-size: .97rem; }
+.verdict b { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.05rem; }
+
+/* Tax table */
+.table-scroll { overflow-x: auto; margin-top: 2rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table.tax { border-collapse: collapse; width: 100%; min-width: 680px; font-size: .95rem; }
+table.tax th, table.tax td { text-align: left; padding: .85rem 1rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.tax thead th { background: var(--soft); font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 700; }
+table.tax tbody tr:last-child td, table.tax tbody tr:last-child th { border-bottom: 0; }
+table.tax tbody th { font-weight: 600; }
+.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.tip { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.2rem; }
+.tip h3 { font-size: 1.05rem; margin-bottom: .35rem; }
+.tip p { margin: 0; font-size: .95rem; color: var(--muted); }
+
+/* Mistakes */
+.mistakes { margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 2.5rem; }
+.mistake { padding: 1rem 0; border-bottom: 1px solid var(--line); }
+.mistake b { display: block; font-size: 1.05rem; }
+.mistake span { color: var(--muted); font-size: .96rem; }
+
+/* Summary */
+.summary { padding: clamp(3rem, 7vw, 5rem) 0; border-top: 2px solid var(--ink); }
+.summary h2 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; margin-bottom: 1.5rem; }
+.summary-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem 2.5rem; }
+.summary-list div { border-left: 3px solid var(--c, var(--ink)); padding-left: 1rem; }
+.summary-list b { display: block; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.15rem; margin-bottom: .25rem; }
+.summary-list p { margin: 0; color: var(--muted); font-size: .97rem; }
+.related { margin-top: 2.5rem; font-size: 1rem; }
+.related a { font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--equity); }
+
+footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+footer p { max-width: 80ch; margin: 0; }
+</style>
+</head>
+<body>
+
+<nav class="jump" aria-label="Sections">
+  <div class="wrap">
+    <strong>Rebalancing</strong>
+    <a href="#why">Why</a>
+    <a href="#when">When</a>
+    <a href="#how">How</a>
+    <a href="#steps">Steps</a>
+    <a href="#calculator">Calculator</a>
+    <a href="#tax">Tax and costs</a>
+    <a href="#summary">Summary</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Bring your portfolio back to plan</h1>
+    <p class="lede">Markets don’t move your investments evenly. Over time, the asset that rallied grows bigger than you intended and quietly changes your risk. Rebalancing is the periodic act of selling a little of what grew too large and adding to what fell behind, so your mix matches the plan you chose.</p>
+
+    <div class="drift" aria-label="Example of portfolio drift">
+      <div class="drift-row">
+        <div class="tag">Your plan<small>Target mix</small></div>
+        <div class="bar"><span class="equity" style="flex-basis:60%">Equity 60%</span><span class="debt" style="flex-basis:30%">Debt 30%</span><span class="gold" style="flex-basis:10%">Gold 10%</span></div>
+      </div>
+      <div class="drift-row">
+        <div class="tag">After a bull run<small>Two years later</small></div>
+        <div class="bar" id="heroDrift"><span class="equity" style="flex-basis:60%">Equity 72%</span><span class="debt" style="flex-basis:30%">Debt 21%</span><span class="gold" style="flex-basis:10%">Gold 7%</span></div>
+      </div>
+      <p class="drift-note">Equity grew from 60% to 72% of the portfolio without you buying a single extra unit. A 30% market fall would now hurt noticeably more than the plan allowed for.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="block" id="why">
+  <div class="wrap">
+    <h2>Why rebalance</h2>
+    <p class="intro">Your asset allocation (how much sits in equity, debt, gold and so on) drives most of your portfolio’s risk and return. Rebalancing keeps that allocation honest.</p>
+    <div class="cols">
+      <div class="point" style="--c: var(--equity)"><h3>Controls risk</h3><p>Without rebalancing, a portfolio tends to drift toward its riskiest asset, because that’s the one that grows fastest in good years.</p></div>
+      <div class="point" style="--c: var(--debt)"><h3>Buys low, sells high, by rule</h3><p>You trim what has run up and add to what has lagged. It forces the discipline most investors struggle with emotionally.</p></div>
+      <div class="point" style="--c: var(--gold)"><h3>Keeps goals on track</h3><p>A goal five years away needs a different mix from one twenty years away. Rebalancing is also how you shift the mix as a goal nears.</p></div>
+      <div class="point" style="--c: var(--intl)"><h3>Removes guesswork</h3><p>A written rule (“rebalance when any asset is 5 points off”) replaces reacting to headlines.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="when">
+  <div class="wrap">
+    <h2>When to rebalance</h2>
+    <p class="intro">There are three common rules. All work; what matters is picking one and sticking to it.</p>
+    <div class="strategies">
+      <div class="strat" style="--c: var(--equity)">
+        <h3>Calendar</h3>
+        <div class="rule">Rebalance on a fixed date, once or twice a year</div>
+        <p>For example, every April after the financial year starts, or on your birthday.</p>
+        <div class="pc">Simple and easy to remember, but may trade when drift is tiny, or wait too long after a sharp move.</div>
+      </div>
+      <div class="strat" style="--c: var(--debt)">
+        <h3>Threshold</h3>
+        <div class="rule">Rebalance when any asset moves beyond a band</div>
+        <p>For example, act when equity moves more than 5 percentage points away from its 60% target (below 55% or above 65%).</p>
+        <div class="pc">Responds to real drift, but needs regular monitoring and can trigger often in volatile years.</div>
+      </div>
+      <div class="strat pick" style="--c: var(--gold)">
+        <span class="badge">Practical default</span>
+        <h3>Hybrid</h3>
+        <div class="rule">Check on a fixed date, act only if outside the band</div>
+        <p>Review once a year (plus after big market moves), and rebalance only if an asset has drifted beyond 5 points.</p>
+        <div class="pc">Keeps checks rare and trades meaningful, which also keeps tax and exit-load costs low.</div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:1.2rem">Also rebalance when your situation changes: a goal moving within 3–5 years, a new job, marriage, or retirement can each justify a new target mix.</p>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <h2>How to rebalance, cheapest first</h2>
+    <p class="intro">Every method below gets you back to target. They’re ordered by cost: try the first one before reaching for the next.</p>
+    <div class="methods">
+      <div class="method">
+        <div class="n">1</div>
+        <div><h3>Redirect new money</h3><p>Send fresh SIPs, bonuses or lumpsums only to the underweight asset until the mix is back on target. Pause or reduce SIPs into the overweight asset for a while.</p></div>
+        <div class="cost"><b>No tax, no exit load</b>Works best for small drifts or when you invest regularly. Large drifts can take many months to close.</div>
+      </div>
+      <div class="method">
+        <div class="n">2</div>
+        <div><h3>Switch or STP within a fund house</h3><p>Use a one-time Switch from the overweight scheme to the underweight scheme of the same AMC, or an STP to move it gradually over a few months.</p></div>
+        <div class="cost"><b>Taxed as a sale</b>Each switch-out is a redemption, so capital gains tax and exit load apply. No bank transfer is needed.</div>
+      </div>
+      <div class="method">
+        <div class="n">3</div>
+        <div><h3>Redeem and reinvest</h3><p>Redeem units of the overweight fund and make a fresh purchase in the underweight fund, which can be at a different AMC.</p></div>
+        <div class="cost"><b>Taxed as a sale</b>Same tax as a switch, plus a few days with money out of the market while the redemption is paid out.</div>
+      </div>
+      <div class="method">
+        <div class="n">4</div>
+        <div><h3>Withdraw from the overweight side</h3><p>If you’re drawing money (via SWP or a one-off redemption), take it from the asset that is above target.</p></div>
+        <div class="cost"><b>Tax only on gains withdrawn</b>Ideal for retirees: income and rebalancing happen in the same transaction.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="steps">
+  <div class="wrap">
+    <h2>Step-by-step process</h2>
+    <p class="intro">Here’s the full routine, from listing holdings to placing the trades.</p>
+    <ol class="steps">
+      <li><b>Write down your target allocation</b><span>For example 60% equity, 30% debt, 10% gold, and a tolerance band such as ±5 points. Base it on goal horizon and risk tolerance.</span></li>
+      <li><b>List every holding at today’s value</b><span>Use your CAS (Consolidated Account Statement) from CAMS, KFintech or the depositories to capture all folios across fund houses. Include direct stocks, EPF/PPF and FDs if your plan covers them.</span></li>
+      <li><b>Classify each fund by asset class</b><span>Pure equity and debt funds are simple. Split hybrid funds by their actual mix from the monthly factsheet (a balanced advantage fund at 55% equity counts as 55% equity, 45% debt).</span></li>
+      <li><b>Calculate current percentages and drift</b><span>Divide each asset class by the total. Compare with your target and see which ones are outside the band.</span></li>
+      <li><b>Work out the amounts</b><span>Target value = total × target %. The difference from current value is how much to buy or sell. The calculator below does this for you.</span></li>
+      <li><b>Pick the cheapest route</b><span>Prefer new money first. If you must sell, choose units held longer than 12 months, check the exit load period, and use the ₹1.25 lakh equity LTCG exemption where possible.</span></li>
+      <li><b>Place the transactions</b><span>Use Switch or STP within a fund house, or redeem and buy across fund houses. Mind the cut-off times so both legs get the NAV you expect.</span></li>
+      <li><b>Record and update SIPs</b><span>Note the date and new mix, and adjust ongoing SIP amounts so new money keeps flowing in the target ratio.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="block" id="calculator">
+  <div class="wrap">
+    <h2>Rebalancing calculator</h2>
+    <p class="intro">Enter what you hold today and the mix you want. It shows how far you’ve drifted and exactly how much to buy or sell in each asset class.</p>
+
+    <div class="calc">
+      <div class="calc-grid">
+        <div>
+          <h3>Your portfolio</h3>
+          <table class="inputs">
+            <thead><tr><th>Asset class</th><th>Current value</th><th>Target</th></tr></thead>
+            <tbody id="inRows"></tbody>
+          </table>
+          <div class="sumcheck" id="sumcheck" aria-live="polite"></div>
+
+          <div class="row-inline">
+            <div>
+              <label class="lbl" for="band">Tolerance band</label>
+              <div class="field"><span>±</span><input id="band" type="number" inputmode="decimal" min="0" max="50" step="0.5" value="5"><span class="after">pts</span></div>
+            </div>
+            <div>
+              <label class="lbl" for="fresh">New money to invest</label>
+              <div class="field"><span>₹</span><input id="fresh" type="number" inputmode="numeric" min="0" step="1000" value="0"></div>
+            </div>
+          </div>
+
+          <div class="seg" role="group" aria-label="Rebalancing method">
+            <button type="button" id="modeFull" aria-pressed="true">Buy and sell to exact target</button>
+            <button type="button" id="modeFresh" aria-pressed="false">Use new money only</button>
+          </div>
+          <p class="hint" id="modeHint"></p>
+        </div>
+
+        <div>
+          <h3>Result</h3>
+          <div class="result-bars">
+            <div class="drift-row"><div class="tag">Now</div><div class="bar" id="barNow"></div></div>
+            <div class="drift-row"><div class="tag">After</div><div class="bar" id="barAfter"></div></div>
+          </div>
+          <div class="out-scroll">
+            <table class="out">
+              <thead><tr><th>Asset</th><th>Now</th><th>Target</th><th>Drift</th><th>Action</th><th>After</th></tr></thead>
+              <tbody id="outRows"></tbody>
+            </table>
+          </div>
+          <div class="verdict" id="verdict" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="tax">
+  <div class="wrap">
+    <h2>Tax and costs to check before selling</h2>
+    <p class="intro">Selling to rebalance is a redemption, so it can trigger capital gains tax and exit load. These are the rates for FY 2026-27, unchanged by Budget 2026.</p>
+    <div class="table-scroll">
+      <table class="tax">
+        <thead><tr><th>Fund type</th><th>Short-term (and rate)</th><th>Long-term (and rate)</th><th>What it means for rebalancing</th></tr></thead>
+        <tbody>
+          <tr><th>Equity-oriented (65%+ equity)</th><td>Held under 12 months: 20%</td><td>Held 12 months or more: 12.5% on gains above ₹1.25 lakh a year</td><td>Sell older units first; keep yearly gains near the ₹1.25 lakh exemption where possible.</td></tr>
+          <tr><th>Debt funds (bought on or after 1 April 2023)</th><td colspan="2">Taxed at your income slab rate regardless of holding period</td><td>Holding period doesn’t change tax; consider your slab and the fund’s exit load.</td></tr>
+          <tr><th>Gold, international and hybrid (35–65% equity)</th><td>Under 24 months (12 for listed ETFs): slab rate</td><td>Beyond that: 12.5%, no ₹1.25 lakh exemption</td><td>Holding period matters; check the specific fund’s classification.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tips">
+      <div class="tip"><h3>Exit load</h3><p>Many equity funds charge about 1% if redeemed within a year. Liquid funds have a small load for the first 7 days. Check the scheme document.</p></div>
+      <div class="tip"><h3>Stamp duty</h3><p>0.005% is charged on every purchase, including switch-ins and STP instalments. Small, but it adds up with frequent trades.</p></div>
+      <div class="tip"><h3>Offset with losses</h3><p>If some funds are at a loss, selling them in the same year can offset gains elsewhere, within the set-off rules.</p></div>
+      <div class="tip"><h3>Time it with the year</h3><p>The ₹1.25 lakh exemption resets every financial year. Spreading a large rebalance across March and April can use two years’ exemptions.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <h2>Common mistakes</h2>
+    <div class="mistakes">
+      <div class="mistake"><b>Rebalancing too often</b><span>Monthly tinkering mostly adds tax, exit loads and short-term gains. Once a year is enough for most people.</span></div>
+      <div class="mistake"><b>Ignoring tax and exit load</b><span>Selling units held for 11 months to fix a 3-point drift can cost more than the drift itself.</span></div>
+      <div class="mistake"><b>Counting hybrid funds as pure equity</b><span>Use the factsheet split, or your equity share will be overstated.</span></div>
+      <div class="mistake"><b>Chasing last year’s winner</b><span>Rebalancing means trimming the winner. Moving more money into it does the opposite.</span></div>
+      <div class="mistake"><b>Rebalancing between funds, not assets</b><span>Swapping one large-cap fund for another doesn’t change your allocation. Rebalance across asset classes first.</span></div>
+      <div class="mistake"><b>Forgetting the SIPs</b><span>If SIPs keep flowing in the old ratio, the drift returns quickly. Update them after each rebalance.</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<section class="summary" id="summary">
+  <div class="wrap">
+    <h2>Summary</h2>
+    <div class="summary-list">
+      <div style="--c: var(--equity)"><b>What</b><p>Restoring your target asset mix after markets have pushed it off course.</p></div>
+      <div style="--c: var(--debt)"><b>Why</b><p>Keeps risk where you chose it and enforces selling high and buying low.</p></div>
+      <div style="--c: var(--gold)"><b>When</b><p>Check once a year (or after big moves) and act only if an asset is beyond your band, often ±5 points.</p></div>
+      <div style="--c: var(--intl)"><b>How</b><p>Redirect new money first, then use Switch or STP within an AMC, then redeem and reinvest. SWP from the overweight side if you’re withdrawing.</p></div>
+      <div style="--c: var(--warn)"><b>Watch the cost</b><p>Equity STCG 20%, LTCG 12.5% above ₹1.25 lakh, debt at slab rate, plus exit loads and stamp duty.</p></div>
+      <div><b>Keep it going</b><p>Update SIPs to the target ratio so the portfolio stays balanced between reviews.</p></div>
+    </div>
+    <p class="related">For how Switch, STP, SIP and SWP orders are placed, see the companion guide: <a href="https://claude.ai/artifact/Uc2pt5NB3EUsbBpq2Z2g39" target="_blank" rel="noopener">How mutual fund transactions are placed</a>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>This guide is for general understanding of portfolio rebalancing in Indian mutual funds and is not investment, tax or legal advice. Tax rates shown are for FY 2026-27 and exclude surcharge and cess; rules can change. Consult a SEBI-registered investment adviser or tax professional for decisions about your own portfolio. Mutual fund investments are subject to market risks.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var assets = [
+    { key: "equity", name: "Equity", value: 720000, target: 60 },
+    { key: "debt", name: "Debt", value: 210000, target: 30 },
+    { key: "gold", name: "Gold", value: 70000, target: 10 },
+    { key: "intl", name: "International", value: 0, target: 0 }
+  ];
+  var mode = "full";
+
+  // Hero animation: drift the second bar once on load
+  var hero = document.getElementById("heroDrift");
+  if (hero) {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var spans = hero.querySelectorAll("span");
+    var finalPct = [72, 21, 7];
+    function applyDrift() { spans.forEach(function (s, i) { s.style.flexBasis = finalPct[i] + "%"; }); }
+    if (reduce) applyDrift(); else setTimeout(applyDrift, 600);
+  }
+
+  var fmt = function (n) {
+    var r = Math.round(n);
+    return "₹" + Math.abs(r).toLocaleString("en-IN");
+  };
+  var pct = function (n) { return (Math.round(n * 10) / 10).toFixed(1) + "%"; };
+
+  var inRows = document.getElementById("inRows");
+  assets.forEach(function (a, i) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><i style="background:var(--' + a.key + ')"></i>' + a.name + '</td>' +
+      '<td><div class="field"><span>₹</span><input type="number" inputmode="numeric" min="0" step="1000" aria-label="' + a.name + ' current value" data-i="' + i + '" data-f="value" value="' + a.value + '"></div></td>' +
+      '<td><div class="field"><input type="number" inputmode="decimal" min="0" max="100" step="1" aria-label="' + a.name + ' target percent" data-i="' + i + '" data-f="target" value="' + a.target + '"><span class="after">%</span></div></td>';
+    inRows.appendChild(tr);
+  });
+
+  inRows.addEventListener("input", function (e) {
+    var t = e.target;
+    if (!t.dataset.f) return;
+    var v = parseFloat(t.value);
+    assets[+t.dataset.i][t.dataset.f] = isFinite(v) && v > 0 ? v : 0;
+    render();
+  });
+  document.getElementById("band").addEventListener("input", render);
+  document.getElementById("fresh").addEventListener("input", render);
+
+  var bFull = document.getElementById("modeFull"), bFresh = document.getElementById("modeFresh");
+  function setMode(m) {
+    mode = m;
+    bFull.setAttribute("aria-pressed", m === "full");
+    bFresh.setAttribute("aria-pressed", m === "fresh");
+    render();
+  }
+  bFull.addEventListener("click", function () { setMode("full"); });
+  bFresh.addEventListener("click", function () { setMode("fresh"); });
+
+  function drawBar(el, values, total) {
+    el.innerHTML = "";
+    if (total <= 0) return;
+    assets.forEach(function (a, i) {
+      var p = values[i] / total * 100;
+      if (p <= 0) return;
+      var s = document.createElement("span");
+      s.className = a.key;
+      s.style.flexBasis = p + "%";
+      s.textContent = p >= 9 ? Math.round(p) + "%" : "";
+      s.title = a.name + " " + pct(p);
+      el.appendChild(s);
+    });
+  }
+
+  function render() {
+    var band = Math.max(0, parseFloat(document.getElementById("band").value) || 0);
+    var fresh = Math.max(0, parseFloat(document.getElementById("fresh").value) || 0);
+    var targetSum = assets.reduce(function (s, a) { return s + a.target; }, 0);
+    var sc = document.getElementById("sumcheck");
+    var ok = Math.abs(targetSum - 100) < 0.01;
+    sc.textContent = ok ? "Targets add up to 100%." : "Targets add up to " + targetSum.toFixed(1) + "%. Adjust them to total 100%.";
+    sc.className = "sumcheck " + (ok ? "good" : "bad");
+
+    document.getElementById("modeHint").textContent = mode === "full"
+      ? "Sells the overweight assets and buys the underweight ones so every asset lands exactly on target. Selling can trigger tax and exit load."
+      : "Avoids selling. New money goes only to underweight assets; any money left after reaching target is split by your target mix.";
+
+    var cur = assets.map(function (a) { return a.value; });
+    var total = cur.reduce(function (s, v) { return s + v; }, 0);
+    var totalAfter = total + fresh;
+    var outRows = document.getElementById("outRows");
+    var verdict = document.getElementById("verdict");
+
+    drawBar(document.getElementById("barNow"), cur, total);
+
+    if (!ok || totalAfter <= 0) {
+      outRows.innerHTML = "";
+      document.getElementById("barAfter").innerHTML = "";
+      verdict.innerHTML = totalAfter <= 0 ? "Enter your current holdings to see results." : "Fix the target percentages to see results.";
+      return;
+    }
+
+    var trade = assets.map(function () { return 0; });
+    if (mode === "full") {
+      trade = assets.map(function (a, i) { return totalAfter * a.target / 100 - cur[i]; });
+    } else {
+      var deficits = assets.map(function (a, i) { return Math.max(0, totalAfter * a.target / 100 - cur[i]); });
+      var dSum = deficits.reduce(function (s, v) { return s + v; }, 0);
+      if (fresh > 0) {
+        if (dSum >= fresh) {
+          trade = deficits.map(function (d) { return dSum ? fresh * d / dSum : 0; });
+        } else {
+          var left = fresh - dSum;
+          trade = deficits.map(function (d, i) { return d + left * assets[i].target / 100; });
+        }
+      }
+    }
+    var after = cur.map(function (v, i) { return v + trade[i]; });
+    drawBar(document.getElementById("barAfter"), after, totalAfter);
+
+    var anyOut = false, sells = 0, buys = 0, maxAfterGap = 0;
+    outRows.innerHTML = "";
+    assets.forEach(function (a, i) {
+      if (cur[i] === 0 && a.target === 0) return;
+      var nowP = total > 0 ? cur[i] / total * 100 : 0;
+      var drift = nowP - a.target;
+      var out = Math.abs(drift) > band;
+      if (out) anyOut = true;
+      var afterP = after[i] / totalAfter * 100;
+      maxAfterGap = Math.max(maxAfterGap, Math.abs(afterP - a.target));
+      var t = trade[i], action;
+      if (t > 0.5) { action = '<span class="act-buy">Buy ' + fmt(t) + '</span>'; buys += t; }
+      else if (t < -0.5) { action = '<span class="act-sell">Sell ' + fmt(t) + '</span>'; sells += -t; }
+      else action = '<span class="act-hold">Hold</span>';
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + a.name + "</td><td>" + pct(nowP) + "</td><td>" + pct(a.target) + "</td><td>" +
+        (drift > 0 ? "+" : "") + (Math.round(drift * 10) / 10).toFixed(1) + (out ? '<span class="flag">out of band</span>' : "") +
+        "</td><td>" + action + "</td><td>" + pct(afterP) + "</td>";
+      outRows.appendChild(tr);
+    });
+
+    var msg;
+    if (!anyOut && fresh === 0) {
+      msg = "<b>No rebalance needed.</b> Every asset is within ±" + band + " points of its target. Check again at your next review.";
+    } else if (!anyOut) {
+      msg = "<b>Within band.</b> Nothing needs selling. The new money above is placed to nudge the mix closer to target.";
+    } else if (mode === "full") {
+      msg = "<b>Rebalance suggested.</b> Move about " + fmt(sells) + " out of overweight assets" + (fresh > 0 ? " and invest it along with your new " + fmt(fresh) : "") +
+        ". Within one fund house, a Switch or STP does this in one step. Check exit loads and capital gains first.";
+    } else {
+      msg = maxAfterGap > band
+        ? "<b>New money isn’t enough on its own.</b> After investing " + fmt(fresh) + ", at least one asset is still more than " + band + " points off target. Add more fresh money, redirect SIPs for a few months, or switch to buy-and-sell."
+        : "<b>Fixed without selling.</b> Investing " + fmt(fresh) + " this way brings every asset within ±" + band + " points, with no tax or exit load.";
+    }
+    verdict.innerHTML = msg;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
